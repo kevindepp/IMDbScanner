@@ -9,6 +9,11 @@ using namespace std;
 
 Model_Person::Model_Person( ) {
 
+	num_name_part_eng_max = 10;
+	num_name_part_chs_max = 10;
+	name_eng_partial = new string [num_name_part_eng_max];
+	name_chs_partial = new string [num_name_part_chs_max];
+
 	num_name_part_eng = 1;
 	num_name_part_chs = 1;
 	num_translation_chs = 1;
@@ -28,6 +33,9 @@ int Model_Person::Initialize(int id_in) {
 	ReformatEngName();
 	CountNumTransChs();
 	CountNamePart();
+	SplitNameEng();
+	ChooseTransChs();
+	SplitNameChs();
 
 	return 0;
 }
@@ -146,9 +154,9 @@ int Model_Person::ReformatEngName () {
 
 	int i;
 
-	num_name_eng_discard = CountFileLine(list_name_eng_discard_file_path);
+	size_t pos;
 
-	cout << num_name_eng_discard << endl;
+	num_name_eng_discard = CountFileLine(list_name_eng_discard_file_path);
 
 	name_eng_discard = new string [num_name_eng_discard];
 
@@ -158,8 +166,20 @@ int Model_Person::ReformatEngName () {
 		fin >> name_eng_discard[i];
 	fin.close();
 
-	for (i = 0; i < num_name_eng_discard; i++)
-		cout << name_eng_discard[i] << endl;
+	for (i = 0; i < num_name_eng_discard; i++) {
+		name_eng_discard[i].insert(0, " ");
+		name_eng_discard[i] += " ";
+	}
+
+	for (i = 0; i < num_name_eng_discard; i++) {
+		pos = 0;
+		while (pos != -1) {
+			pos = name_eng_full.find(name_eng_discard[i], pos);
+			if (pos != -1 && pos << name_eng_full.size()) {
+				name_eng_full.replace(pos, name_eng_discard[i].size(), " ");
+			}
+		}
+	}
 
 	return 0;
 }
@@ -206,7 +226,130 @@ int Model_Person::CountNamePart() {
 	return 0;
 }
 
+int Model_Person::SplitNameEng() {
+
+	int i;
+
+	size_t pos_start = 0, pos_stop = 0;
+
+	if (num_name_part_eng == 1)
+		name_eng_partial[0] = name_eng_full;
+	else {
+		for (i = 0; i < num_name_part_eng; i++) {
+			pos_stop = name_eng_full.find(' ', pos_start);
+			if (pos_stop != -1)
+				name_eng_partial[i] = name_eng_full.substr(pos_start , pos_stop - pos_start);	//The Words between two Spaces
+			else
+				name_eng_partial[i] = name_eng_full.substr(pos_start);
+
+			//Set the Starting Point for Next Search
+			pos_start = pos_stop + 1;
+		}
+	}
+
+	return 0;
+}
+
+int Model_Person::ChooseTransChs() {
+
+	int i, j;
+	size_t pos_start = 0, pos_stop = 0;
+
+	if (num_translation_chs == 1)
+		return 0;
+
+	name_chs_multi_full = new string [num_translation_chs];
+
+	for (i = 0; i < num_translation_chs; i++) {
+		pos_stop = name_chs_full.find("/", pos_start);
+		if (pos_stop != -1)
+			name_chs_multi_full[i] = name_chs_full.substr(pos_start , pos_stop - pos_start);
+		else
+			name_chs_multi_full[i] = name_chs_full.substr(pos_start);
+		//Set the Starting Point for Next Search
+		pos_start = pos_stop + 1;
+	}
+
+	//Reset
+	pos_start = pos_stop = 0;
+
+	string keyword_chs_name_divider = "，";
+
+	name_chs_multi_part = new string *[num_translation_chs];
+	for (i = 0; i < num_translation_chs; i++) {
+		name_chs_multi_part[i] = new string [num_name_part_chs];
+		for (j = 0; j < num_name_part_chs; j++) {
+			pos_stop = name_chs_multi_full[i].find(keyword_chs_name_divider, pos_start);
+			if (pos_stop != -1)
+				name_chs_multi_part[i][j] = name_chs_multi_full[i].substr(pos_start, pos_stop - pos_start);
+			else
+				name_chs_multi_part[i][j] = name_chs_multi_full[i].substr(pos_start);
+
+			//Set the Starting Point for Next Search
+			pos_start = pos_stop + 2;
+			cout << '[' << i << "][" << j << "]\t" << name_chs_multi_part[i][j] << endl;
+		}
+		//Reset
+		pos_start = pos_stop = 0;
+	}
+
+	//Erase the Original String that Contains Multiple Chinese Translation
+	name_chs_full.clear();
+
+	int choose = 0;
+	cout << "Multiple Chinese Translations Found for \"" << name_eng_full << "\"" << endl;
+	cout << "Please Choose the Preferred Translation." << endl;
+	for (j = 0; j < num_name_part_chs; j++) {
+		choose = 0;
+		while (choose < 1 || choose > num_name_part_chs) {
+			for (i = 0; i < num_translation_chs; i++) {
+				cout << '[' << i + 1 << "]\t" << name_chs_multi_part[i][j] << endl;
+			}
+			cout << "Choose Translation for:\t" << name_eng_partial[j] << endl;
+			cin >> choose;
+		}
+		name_chs_full += name_chs_multi_part[choose - 1][j];
+		if (j != (num_name_part_chs - 1))
+			name_chs_full += "，";
+	}
+
+	return 0;
+}
+
+int Model_Person::SplitNameChs() {
+
+	int i;
+
+	size_t pos_start = 0, pos_stop = 0;
+
+	string keyword_chs_name_divider = "，";
+
+	if (name_chs_full.empty())
+		return 1;
+
+	if (num_name_part_chs == 1)
+		name_chs_partial[0] = name_chs_full;
+	else {
+		for (i = 0; i < num_name_part_chs; i++) {
+			pos_stop = name_chs_full.find(keyword_chs_name_divider, pos_start);
+			if (pos_stop != -1)
+				name_chs_partial[i] = name_chs_full.substr(pos_start , pos_stop - pos_start);	//The Words between two Keywords
+			else
+				name_chs_partial[i] = name_chs_full.substr(pos_start);
+
+			//Set the Starting Point for Next Search
+			pos_start = pos_stop + 2;		//The Divider Keyword "，" Takes 2 Chars
+		}
+	}
+
+	return 0;
+}
+
+
+
 int Model_Person::Display() {
+
+	int i;
 
 	cout << "ID: " << id << endl;
 
@@ -215,6 +358,16 @@ int Model_Person::Display() {
 	cout << "# of Trans CHS: " << num_translation_chs << endl;
 
 	cout << "Name Part: " << num_name_part_eng << " | " << num_name_part_chs<< endl;
+
+	if (num_name_part_eng != num_name_part_chs) {
+		cout << "# of Name Part Mismatch!";
+		cin.get();
+	}
+
+	cout << "Name Match: " << endl;
+	for (i = 0; i < num_name_part_eng; i++)
+		cout << "[" << i + 1 << "]\t" << name_eng_partial[i] << '\t' << name_chs_partial[i] << endl;
+
 
 	return 0;
 }
