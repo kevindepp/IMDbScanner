@@ -24,6 +24,11 @@ private:
 	string name_eng_full, name_chs_full;
 	string *name_eng_partial, *name_chs_partial;
 
+	string list_name_trans_eng_chs_file_path;
+
+	int num_chs_trans_record;
+	string *name_eng_record, *name_chs_record;
+
 public:
 
 	Model_Person::Model_Person();
@@ -40,6 +45,8 @@ public:
 	int Model_Person::SplitNameEng();
 	int Model_Person::ChooseTransChs();
 	int Model_Person::SplitNameChs();
+	int Model_Person::WriteChsTrans();
+	int Model_Person::ReadChsTrans();
 
 
 	int Model_Person::Display();

@@ -19,6 +19,7 @@ Model_Person::Model_Person( ) {
 	num_translation_chs = 1;
 
 	list_name_eng_discard_file_path = "List_Name_Eng_Discard.txt";
+	list_name_trans_eng_chs_file_path = "List_Name_Trans_Eng_Chs.csv";
 	
 }
 
@@ -34,8 +35,11 @@ int Model_Person::Initialize(int id_in) {
 	CountNumTransChs();
 	CountNamePart();
 	SplitNameEng();
+	ReadChsTrans();
 	ChooseTransChs();
 	SplitNameChs();
+//	WriteChsTrans();
+	
 
 	return 0;
 }
@@ -250,6 +254,29 @@ int Model_Person::SplitNameEng() {
 	return 0;
 }
 
+int Model_Person::ReadChsTrans() {
+
+	int i;
+	ifstream fin;
+
+	num_chs_trans_record = CountFileLine(list_name_trans_eng_chs_file_path);
+
+	cout << "# of Name Translation in Record: " << num_chs_trans_record << endl;
+
+	name_eng_record = new string[num_chs_trans_record];
+	name_chs_record = new string[num_chs_trans_record];
+
+	fin.open(list_name_trans_eng_chs_file_path);
+	for (i = 0; i < num_chs_trans_record; i++) {
+		getline(fin, name_eng_record[i], ',');
+		getline(fin, name_chs_record[i], '\n');
+		cout << "[" << i << "]\t" << name_eng_record[i] << " | " << name_chs_record[i] << endl;
+	}
+	fin.close();
+
+	return 0;
+}
+
 int Model_Person::ChooseTransChs() {
 
 	int i, j;
@@ -341,6 +368,22 @@ int Model_Person::SplitNameChs() {
 			pos_start = pos_stop + 2;		//The Divider Keyword "¡¤" Takes 2 Chars
 		}
 	}
+
+	return 0;
+}
+
+int Model_Person::WriteChsTrans(){
+
+	int i;
+	ofstream fout;
+
+	if (name_chs_full.empty())
+		return 1;
+
+	fout.open(list_name_trans_eng_chs_file_path, ios::app);
+	for (i = 0; i < num_name_part_eng; i++)
+		fout << name_eng_partial[i] << ',' << name_chs_partial[i] << endl;
+	fout.close();
 
 	return 0;
 }
