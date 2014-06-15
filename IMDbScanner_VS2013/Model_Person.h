@@ -43,6 +43,7 @@ public:
 	int Model_Person::CountNumTransChs();
 	int Model_Person::CountNamePart();
 	int Model_Person::SplitNameEng();
+	int Model_Person::PredictTransChs();
 	int Model_Person::ChooseTransChs();
 	int Model_Person::SplitNameChs();
 	int Model_Person::WriteChsTrans();

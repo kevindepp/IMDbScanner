@@ -36,6 +36,7 @@ int Model_Person::Initialize(int id_in) {
 	CountNamePart();
 	SplitNameEng();
 	ReadChsTrans();
+	PredictTransChs();
 	ChooseTransChs();
 	SplitNameChs();
 //	WriteChsTrans();
@@ -273,6 +274,41 @@ int Model_Person::ReadChsTrans() {
 		cout << "[" << i << "]\t" << name_eng_record[i] << " | " << name_chs_record[i] << endl;
 	}
 	fin.close();
+
+	return 0;
+}
+
+int Model_Person::PredictTransChs() {
+
+	int i, j;
+	int count = 0;
+
+	if (name_chs_full.empty()) {
+		cout << "Predict CHS Name based on Records...";
+		for (i = 0; i < num_name_part_eng; i++) {
+			for (j = 0; j < num_chs_trans_record; j++) {
+				if (name_eng_partial[i].compare(name_eng_record[j]) == 0) {
+					name_chs_partial[i] = name_chs_record[j];
+					count++;
+				}
+			}
+		}
+		if (count == num_name_part_eng) {
+			for (i = 0; i < num_name_part_eng; i++) {
+				if (i != 0) {
+					name_chs_full += "¡¤";
+					name_chs_full += name_chs_partial[i];
+				}
+				else
+					name_chs_full += name_chs_partial[i];
+			}
+			cout << "Succeeded!\t" << name_eng_full << " | " << name_chs_full << endl;
+		}
+		else {
+			cout << "Failed!" << endl;
+		}
+	}
+
 
 	return 0;
 }
